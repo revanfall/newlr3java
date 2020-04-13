@@ -51,7 +51,6 @@ public class Frontend extends AbstractHandler implements Runnable {
                             "</form>";
             pageWriter.println(html);
         }
-        System.out.println("urlPath = [" + urlPath + "]");
         if (urlPath.equals("/login") && session.getAttribute("state").equals("start")){
             username = request.getParameter("username");
             userId = fakeAccounter.get(username);
