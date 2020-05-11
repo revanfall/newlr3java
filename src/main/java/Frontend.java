@@ -7,22 +7,18 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Frontend extends AbstractHandler implements Runnable {
 
     public AtomicInteger HandleCount = new AtomicInteger();
-    private Map<String, String> fakeAccounter = new HashMap<String, String>();
-
-    public Frontend()   {
-        fakeAccounter.put("Illia", "1");
-        fakeAccounter.put("Igor", "2");
-        fakeAccounter.put("Cristiano", "3");
-        fakeAccounter.put("Denis", "4");
-        fakeAccounter.put("Vova", "5");
-        fakeAccounter.put("Maxon", "6");
+    private DAOUser dao;
+    public Frontend() throws Exception {
+    dao=new DAOUser("jdbc:mysql://localhost/javausers","root","1234");
     }
 
 
@@ -32,7 +28,8 @@ public class Frontend extends AbstractHandler implements Runnable {
                        HttpServletRequest httpServletRequest,
                        HttpServletResponse httpServletResponse)throws IOException, ServletException {
         httpServletResponse.setContentType("text/html;charset=utf-8");
-        String userId, username;
+        Integer userId;
+        String username;
         PrintWriter pageWriter = httpServletResponse.getWriter();
 
         httpServletResponse.setStatus(HttpServletResponse.SC_OK);
@@ -52,9 +49,17 @@ public class Frontend extends AbstractHandler implements Runnable {
             pageWriter.println(html);
         }
         if (urlPath.equals("/login") && session.getAttribute("state").equals("start")){
+
             username = request.getParameter("username");
-            userId = fakeAccounter.get(username);
-            if (userId == null){
+            Optional<UserDataSet> user = null;
+            try {
+                user = Optional.ofNullable(dao.get(username));
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            userId = user.map(UserDataSet::getId).orElse(-1);
+            if (userId == -1){
                 String html = "<div>"+ "No user is found" + "</div>" +
                         "<a href=\"/\">Autorization</a>";
                 pageWriter.println(html);
